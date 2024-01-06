@@ -1,0 +1,311 @@
+
+[
+    {
+    "title": "Query a database",
+    "url": "https://developers.notion.com/reference/post-database-query",
+    "html": "Query a database\nPOST\nhttps://api.notion.com/v1/databases/{database_id}/query\n\nGets a list of Pages and/or Databases contained in the database, filtered and ordered according to the filter conditions and sort criteria provided in the request. The response may contain fewer than page_size of results. If the response includes a next_cursor value, refer to the pagination reference for details about how to use a cursor to iterate through the list.\n\n📘\n\nWiki databases can contain both pages and databases as children.\n\nFilters are similar to the filters provided in the Notion UI where the set of filters and filter groups chained by \"And\" in the UI is equivalent to having each filter in the array of the compound \"and\" filter. Similar a set of filters chained by \"Or\" in the UI would be represented as filters in the array of the \"or\" compound filter.\nFilters operate on database properties and can be combined. If no filter is provided, all the pages in the database will be returned with pagination.\n\nThe above filters in the UI can be represented as the following filter object\n\nFilter Object\n{\n  \"and\": [\n    {\n      \"property\": \"Done\",\n      \"checkbox\": {\n        \"equals\": true\n      }\n    }, \n    {\n      \"or\": [\n        {\n          \"property\": \"Tags\",\n          \"contains\": \"A\"\n        },\n        {\n          \"property\": \"Tags\",\n          \"contains\": \"B\"\n        }\n      ]\n  \t}\n  ]\n}\n\n\nIn addition to chained filters, databases can be queried with single filters.\n\nJSON\n{\n    \"property\": \"Done\",\n    \"checkbox\": {\n        \"equals\": true\n   }\n }\n\n\nSorts are similar to the sorts provided in the Notion UI. Sorts operate on database properties or page timestamps and can be combined. The order of the sorts in the request matter, with earlier sorts taking precedence over later ones.\n\nThe properties of the database schema returned in the response body can be filtered with the filter_properties query parameter.\n\nhttps://api.notion.com/v1/databases/[database_id]/query?filter_properties=[property_id_1]\n\n\nMultiple filter properties can be provided by chaining the filter_properties query param.\n\nhttps://api.notion.com/v1/databases/[database_id]/query?filter_properties=[property_id_1]&filter_properties=[property_id_2]\n\n\nProperty IDs can be determined with the Retrieve a database endpoint.\n\nIf you are using the Notion JavaScript SDK, the filter_properties endpoint expects an array of property ID strings.\n\nJavaScript\nnotion.databases.query({\n\tdatabase_id: id,\n\tfilter_properties: [\"propertyID1\", \"propertyID2\"]\n})\n\n📘\n\nPermissions\n\nBefore an integration can query a database, the database must be shared with the integration. Attempting to query a database that has not been shared will return an HTTP response with a 404 status code.\n\nTo share a database with an integration, click the ••• menu at the top right of a database page, scroll to Add connections, and use the search bar to find and select the integration from the dropdown list.\n\n📘\n\nIntegration capabilities\n\nThis endpoint requires an integration to have read content capabilities. Attempting to call this API without read content capabilities will return an HTTP response with a 403 status code. For more information on integration capabilities, see the capabilities guide.\n\n📘\n\nTo display the page titles of related pages rather than just the ID:\n\nAdd a rollup property to the database which uses a formula to get the related page's title. This works well if you have access to updating the database's schema.\n\nOtherwise, retrieve the individual related pages using each page ID.\n\n🚧\n\nFormula Limitation\n\nIf a formula depends on a page property that is a relation, and that relation has more than 25 references, only 25 will be evaluated as part of the formula.\n\nErrors\n\nReturns a 404 HTTP response if the database doesn't exist, or if the integration doesn't have access to the database.\n\nReturns a 400 or a 429 HTTP response if the request exceeds the request limits.\n\nNote: Each Public API endpoint can return several possible error codes. See the Error codes section of the Status codes documentation for more information."
+    },
+    {
+    "title": "Filter database entries",
+    "url": "https://developers.notion.com/reference/post-database-query-filter",
+    "html": "Filter database entries\n\nWhen you query a database, you can send a filter object in the body of the request that limits the returned entries based on the specified criteria.\n\nFor example, the below query limits the response to entries where the \"Task completed\" checkbox property value is true:\n\ncURL\ncurl -X POST 'https://api.notion.com/v1/databases/897e5a76ae524b489fdfe71f5945d1af/query' \\\n  -H 'Authorization: Bearer '\"$NOTION_API_KEY\"'' \\\n  -H 'Notion-Version: 2022-06-28' \\\n  -H \"Content-Type: application/json\" \\\n--data '{\n  \"filter\": {\n    \"property\": \"Task completed\",\n    \"checkbox\": {\n        \"equals\": true\n   }\n  }\n}'\n\n\nHere is the same query using the Notion SDK for JavaScript:\n\nJavaScript\nconst { Client } = require('@notionhq/client');\n\nconst notion = new Client({ auth: process.env.NOTION_API_KEY });\n// replace with your own database ID\nconst databaseId = 'd9824bdc-8445-4327-be8b-5b47500af6ce';\n\nconst filteredRows = async () => {\n\tconst response = await notion.databases.query({\n\t  database_id: databaseId,\n\t  filter: {\n\t    property: \"Task completed\",\n\t    checkbox: {\n\t      equals: true\n\t    }\n\t  },\n\t});\n  return response;\n}\n\n\n\nFilters can be chained with the and and or keys so that multiple filters are applied at the same time. (See Query a database for additional examples.)\n\nJSON\n{\n  \"and\": [\n    {\n      \"property\": \"Done\",\n      \"checkbox\": {\n        \"equals\": true\n      }\n    }, \n    {\n      \"or\": [\n        {\n          \"property\": \"Tags\",\n          \"contains\": \"A\"\n        },\n        {\n          \"property\": \"Tags\",\n          \"contains\": \"B\"\n        }\n      ]\n    }\n  ]\n}\n\n\nIf no filter is provided, all the pages in the database will be returned with pagination.\n\nThe filter object\n\nEach filter object contains the following fields:\n\nField\tType\tDescription\tExample value\nproperty\tstring\tThe name of the property as it appears in the database, or the property ID.\t\"Task completed\"\ncheckbox\ndate\nfiles\nformula\nmulti_select\nnumber\npeople\nphone_number\nrelation\nrich_text\nselect\nstatus\ntimestamp\nID\tobject\tThe type-specific filter condition for the query. Only types listed in the Field column of this table are supported.\n\nRefer to type-specific filter conditions for details on corresponding object values.\t\"checkbox\": { \"equals\": true }\nExample checkbox filter object\n{\n  \"filter\": {\n    \"property\": \"Task completed\",\n    \"checkbox\": {\n      \"equals\": true\n    }\n  }\n}\n\n👍\n\nThe filter object mimics the database filter option in the Notion UI.\n\nType-specific filter conditions\nCheckbox\nField\tType\tDescription\tExample value\nequals\tboolean\tWhether a checkbox property value matches the provided value exactly.\n\nReturns or excludes all database entries with an exact value match.\tfalse\ndoes_not_equal\tboolean\tWhether a checkbox property value differs from the provided value.\n\nReturns or excludes all database entries with a difference in values.\ttrue\nExample checkbox filter condition\n{\n  \"filter\": {\n    \"property\": \"Task completed\",\n    \"checkbox\": {\n      \"does_not_equal\": true\n    }\n  }\n}\n\nDate\n📘\n\nFor the after, before, equals, on_or_before, and on_or_after fields, if a date string with a time is provided, then the comparison is done with millisecond precision.\n\nIf no timezone is provided, then the timezone defaults to UTC.\n\nA date filter condition can be used to limit date property value types and the timestamp property types created_time and last_edited_time.\n\nThe condition contains the below fields:\n\nField\tType\tDescription\tExample value\nafter\tstring (ISO 8601 date)\tThe value to compare the date property value against.\n\nReturns database entries where the date property value is after the provided date.\t\"2021-05-10\"\n\n\"2021-05-10T12:00:00\"\n\n\"2021-10-15T12:00:00-07:00\"\nbefore\tstring (ISO 8601 date)\tThe value to compare the date property value against.\n\nReturns database entries where the date property value is before the provided date.\t\"2021-05-10\"\n\n\"2021-05-10T12:00:00\"\n\n\"2021-10-15T12:00:00-07:00\"\nequals\tstring (ISO 8601 date)\tThe value to compare the date property value against.\n\nReturns database entries where the date property value is the provided date.\t\"2021-05-10\"\n\n\"2021-05-10T12:00:00\"\n\n\"2021-10-15T12:00:00-07:00\"\nis_empty\ttrue\tThe value to compare the date property value against.\n\nReturns database entries where the date property value contains no data.\ttrue\nis_not_empty\ttrue\tThe value to compare the date property value against.\n\nReturns database entries where the date property value is not empty.\ttrue\nnext_month\tobject (empty)\tA filter that limits the results to database entries where the date property value is within the next month.\t{}\nnext_week\tobject (empty)\tA filter that limits the results to database entries where the date property value is within the next week.\t{}\nnext_year\tobject (empty)\tA filter that limits the results to database entries where the date property value is within the next year.\t{}\non_or_after\tstring (ISO 8601 date)\tThe value to compare the date property value against.\n\nReturns database entries where the date property value is on or after the provided date.\t\"2021-05-10\"\n\n\"2021-05-10T12:00:00\"\n\n\"2021-10-15T12:00:00-07:00\"\non_or_before\tstring (ISO 8601 date)\tThe value to compare the date property value against.\n\nReturns database entries where the date property value is on or before the provided date.\t\"2021-05-10\"\n\n\"2021-05-10T12:00:00\"\n\n\"2021-10-15T12:00:00-07:00\"\npast_month\tobject (empty)\tA filter that limits the results to database entries where the date property value is within the past month.\t{}\npast_week\tobject (empty)\tA filter that limits the results to database entries where the date property value is within the past week.\t{}\npast_year\tobject (empty)\tA filter that limits the results to database entries where the date property value is within the past year.\t{}\nthis_week\tobject (empty)\tA filter that limits the results to database entries where the date property value is this week.\t{}\nExample date filter condition\n{\n  \"filter\": {\n    \"property\": \"Due date\",\n    \"date\": {\n      \"on_or_after\": \"2023-02-08\"\n    }\n  }\n}\n\nFiles\nField\tType\tDescription\tExample value\nis_empty\ttrue\tWhether the files property value does not contain any data.\n\nReturns all database entries with an empty files property value.\ttrue\nis_not_empty\ttrue\tWhether the files property value contains data.\n\nReturns all entries with a populated files property value.\ttrue\nExample files filter condition\n{\n  \"filter\": {\n    \"property\": \"Blueprint\",\n    \"files\": {\n      \"is_not_empty\": true\n    }\n  }\n}\n\nFormula\n\nThe primary field of the formula filter condition object matches the type of the formula’s result. For example, to filter a formula property that computes a checkbox, use a formula filter condition object with a checkbox field containing a checkbox filter condition as its value.\n\nField\tType\tDescription\tExample value\ncheckbox\tobject\tA checkbox filter condition to compare the formula result against.\n\nReturns database entries where the formula result matches the provided condition.\tRefer to the checkbox filter condition.\ndate\tobject\tA date filter condition to compare the formula result against.\n\nReturns database entries where the formula result matches the provided condition.\tRefer to the date filter condition.\nnumber\tobject\tA number filter condition to compare the formula result against.\n\nReturns database entries where the formula result matches the provided condition.\tRefer to the number filter condition.\nstring\tobject\tA rich text filter condition to compare the formula result against.\n\nReturns database entries where the formula result matches the provided condition.\tRefer to the rich text filter condition.\nExample formula filter condition\n{\n  \"filter\": {\n    \"property\": \"One month deadline\",\n    \"formula\": {\n      \"date\":{\n          \"after\": \"2021-05-10\"\n      }\n    }\n  }\n}\n\nMulti-select\nField\tType\tDescription\tExample value\ncontains\tstring\tThe value to compare the multi-select property value against.\n\nReturns database entries where the multi-select value matches the provided string.\t\"Marketing\"\ndoes_not_contain\tstring\tThe value to compare the multi-select property value against.\n\nReturns database entries where the multi-select value does not match the provided string.\t\"Engineering\"\nis_empty\ttrue\tWhether the multi-select property value is empty.\n\nReturns database entries where the multi-select value does not contain any data.\ttrue\nis_not_empty\ttrue\tWhether the multi-select property value is not empty.\n\nReturns database entries where the multi-select value does contains data.\ttrue\nExample multi-select filter condition\n{\n  \"filter\": {\n    \"property\": \"Programming language\",\n    \"multi_select\": {\n      \"contains\": \"TypeScript\"\n    }\n  }\n}\n\nNumber\nField\tType\tDescription\tExample value\ndoes_not_equal\tnumber\tThe number to compare the number property value against.\n\nReturns database entries where the number property value differs from the provided number.\t42\nequals\tnumber\tThe number to compare the number property value against.\n\nReturns database entries where the number property value is the same as the provided number.\t42\ngreater_than\tnumber\tThe number to compare the number property value against.\n\nReturns database entries where the number property value exceeds the provided number.\t42\ngreater_than_or_equal_to\tnumber\tThe number to compare the number property value against.\n\nReturns database entries where the number property value is equal to or exceeds the provided number.\t42\nis_empty\ttrue\tWhether the number property value is empty.\n\nReturns database entries where the number property value does not contain any data.\ttrue\nis_not_empty\ttrue\tWhether the number property value is not empty.\n\nReturns database entries where the number property value contains data.\ttrue\nless_than\tnumber\tThe number to compare the number property value against.\n\nReturns database entries where the number property value is less than the provided number.\t42\nless_than_or_equal_to\tnumber\tThe number to compare the number property value against.\n\nReturns database entries where the number property value is equal to or is less than the provided number.\t42\nExample number filter condition\n{\n  \"filter\": {\n    \"property\": \"Estimated working days\",\n    \"number\": {\n      \"less_than_or_equal_to\": 5\n    }\n  }\n}\n\nPeople\n\nYou can apply a people filter condition to people, created_by, and last_edited_by database property types.\n\nThe people filter condition contains the following fields:\n\nField\tType\tDescription\tExample value\ncontains\tstring (UUIDv4)\tThe value to compare the people property value against.\n\nReturns database entries where the people property value contains the provided string.\t\"6c574cee-ca68-41c8-86e0-1b9e992689fb\"\ndoes_not_contain\tstring (UUIDv4)\tThe value to compare the people property value against.\n\nReturns database entries where the people property value does not contain the provided string.\t\"6c574cee-ca68-41c8-86e0-1b9e992689fb\"\nis_empty\ttrue\tWhether the people property value does not contain any data.\n\nReturns database entries where the people property value does not contain any data.\ttrue\nis_not_empty\ttrue\tWhether the people property value contains data.\n\nReturns database entries where the people property value is not empty.\ttrue\nExample people filter condition\n{\n  \"filter\": {\n    \"property\": \"Last edited by\",\n    \"people\": {\n      \"contains\": \"c2f20311-9e54-4d11-8c79-7398424ae41e\"\n    }\n  }\n}\n\nRelation\nField\tType\tDescription\tExample value\ncontains\tstring (UUIDv4)\tThe value to compare the relation property value against.\n\nReturns database entries where the relation property value contains the provided string.\t\"6c574cee-ca68-41c8-86e0-1b9e992689fb\"\ndoes_not_contain\tstring (UUIDv4)\tThe value to compare the relation property value against.\n\nReturns entries where the relation property value does not contain the provided string.\t\"6c574cee-ca68-41c8-86e0-1b9e992689fb\"\nis_empty\ttrue\tWhether the relation property value does not contain data.\n\nReturns database entries where the relation property value does not contain any data.\ttrue\nis_not_empty\ttrue\tWhether the relation property value contains data.\n\nReturns database entries where the property value is not empty.\ttrue\nExample relation filter condition\n{\n  \"filter\": {\n    \"property\": \"✔️ Task List\",\n    \"relation\": {\n      \"contains\": \"0c1f7cb280904f18924ed92965055e32\"\n    }\n  }\n}\n\nRich text\nField\tType\tDescription\tExample value\ncontains\tstring\tThe string to compare the text property value against.\n\nReturns database entries with a text property value that includes the provided string.\t\"Moved to Q2\"\ndoes_not_contain\tstring\tThe string to compare the text property value against.\n\nReturns database entries with a text property value that does not include the provided string.\t\"Moved to Q2\"\ndoes_not_equal\tstring\tThe string to compare the text property value against.\n\nReturns database entries with a text property value that does not match the provided string.\t\"Moved to Q2\"\nends_with\tstring\tThe string to compare the text property value against.\n\nReturns database entries with a text property value that ends with the provided string.\t\"Q2\"\nequals\tstring\tThe string to compare the text property value against.\n\nReturns database entries with a text property value that matches the provided string.\t\"Moved to Q2\"\nis_empty\ttrue\tWhether the text property value does not contain any data.\n\nReturns database entries with a text property value that is empty.\ttrue\nis_not_empty\ttrue\tWhether the text property value contains any data.\n\nReturns database entries with a text property value that contains data.\ttrue\nstarts_with\tstring\tThe string to compare the text property value against.\n\nReturns database entries with a text property value that starts with the provided string.\t\"Moved\"\nExample rich text filter condition\n{\n  \"filter\": {\n    \"property\": \"Description\",\n    \"rich_text\": {\n      \"contains\": \"cross-team\"\n    }\n  }\n}\n\nRollup\n\nA rollup database property can evaluate to an array, date, or number value. The filter condition for the rollup property contains a rollup key and a corresponding object value that depends on the computed value type.\n\nFilter conditions for array rollup values\nField\tType\tDescription\tExample value\nany\tobject\tThe value to compare each rollup property value against. Can be a filter condition for any other type.\n\nReturns database entries where the rollup property value matches the provided criteria.\t\"rich_text\": { \"contains\": \"Take Fig on a walk\" }\nevery\tobject\tThe value to compare each rollup property value against. Can be a filter condition for any other type.\n\nReturns database entries where every rollup property value matches the provided criteria.\t\"rich_text\": { \"contains\": \"Take Fig on a walk\" }\nnone\tobject\tThe value to compare each rollup property value against. Can be a filter condition for any other type.\n\nReturns database entries where no rollup property value matches the provided criteria.\t\"rich_text\": { \"contains\": \"Take Fig on a walk\" }\nExample array rollup filter condition\n{\n  \"filter\": {\n    \"property\": \"Related tasks\",\n    \"rollup\": {\n      \"any\": {\n        \"rich_text\": {\n          \"contains\": \"Migrate database\"\n        }\n      }\n    }\n  }\n}\n\nFilter conditions for date rollup values\n\nA rollup value is stored as a date only if the \"Earliest date\", \"Latest date\", or \"Date range\" computation is selected for the property in the Notion UI.\n\nField\tType\tDescription\tExample value\ndate\tobject\tA date filter condition to compare the rollup value against.\n\nReturns database entries where the rollup value matches the provided condition.\tRefer to the date filter condition.\nExample date rollup filter condition\n{\n  \"filter\": {\n    \"property\": \"Parent project due date\",\n    \"rollup\": {\n      \"date\": {\n        \"on_or_before\": \"2023-02-08\"\n      }\n    }\n  }\n}\n\nFilter conditions for number rollup values\nField\tType\tDescription\tExample value\nnumber\tobject\tA number filter condition to compare the rollup value against.\n\nReturns database entries where the rollup value matches the provided condition.\tRefer to the number filter condition.\nExample number rollup filter condition\n{\n  \"filter\": {\n    \"property\": \"Total estimated working days\",\n    \"rollup\": {\n      \"number\": {\n        \"does_not_equal\": 42\n      }\n    }\n  }\n}\n\nSelect\nField\tType\tDescription\tExample value\nequals\tstring\tThe string to compare the select property value against.\n\nReturns database entries where the select property value matches the provided string.\t\"This week\"\ndoes_not_equal\tstring\tThe string to compare the select property value against.\n\nReturns database entries where the select property value does not match the provided string.\t\"Backlog\"\nis_empty\ttrue\tWhether the select property value does not contain data.\n\nReturns database entries where the select property value is empty.\ttrue\nis_not_empty\ttrue\tWhether the select property value contains data.\n\nReturns database entries where the select property value is not empty.\ttrue\nExample select filter condition\n{\n  \"filter\": {\n    \"property\": \"Frontend framework\",\n    \"select\": {\n      \"equals\": \"React\"\n    }\n  }\n}\n\nStatus\nField\tType\tDescription\tExample value\nequals\tstring\tThe string to compare the status property value against.\n\nReturns database entries where the status property value matches the provided string.\t\"This week\"\ndoes_not_equal\tstring\tThe string to compare the status property value against.\n\nReturns database entries where the status property value does not match the provided string.\t\"Backlog\"\nis_empty\ttrue\tWhether the status property value does not contain data.\n\nReturns database entries where the status property value is empty.\ttrue\nis_not_empty\ttrue\tWhether the status property value contains data.\n\nReturns database entries where the status property value is not empty.\ttrue\nExample status filter condition\n{\n  \"filter\": {\n    \"property\": \"Project status\",\n    \"status\": {\n      \"equals\": \"Not started\"\n    }\n  }\n}\n\nTimestamp\n\nUse a timestamp filter condition to filter results based on created_time or last_edited_time values.\n\nField\tType\tDescription\tExample value\ntimestamp\tcreated_time last_edited_time\tA constant string representing the type of timestamp to use as a filter.\t\"created_time\"\ncreated_time\nlast_edited_time\tobject\tA date filter condition used to filter the specified timestamp.\tRefer to the date filter condition.\nExample timestamp filter condition for created_time\n{\n  \"filter\": {\n    \"timestamp\": \"created_time\",\n    \"created_time\": {\n      \"on_or_before\": \"2022-10-13\"\n    }\n  }\n}\n\n🚧\n\nThe timestamp filter condition does not require a property name. The API throws an error if you provide one.\n\nID\n\nUse a timestamp filter condition to filter results based on the unique_id value.\n\nField\tType\tDescription\tExample value\ndoes_not_equal\tnumber\tThe value to compare the unique_id property value against.\n\nReturns database entries where the unique_id property value differs from the provided value.\t42\nequals\tnumber\tThe value to compare the unique_id property value against.\n\nReturns database entries where the unique_id property value is the same as the provided value.\t42\ngreater_than\tnumber\tThe value to compare the unique_id property value against.\n\nReturns database entries where the unique_id property value exceeds the provided value.\t42\ngreater_than_or_equal_to\tnumber\tThe value to compare the unique_id property value against.\n\nReturns database entries where the unique_id property value is equal to or exceeds the provided value.\t42\nless_than\tnumber\tThe value to compare the unique_id property value against.\n\nReturns database entries where the unique_id property value is less than the provided value.\t42\nless_than_or_equal_to\tnumber\tThe value to compare the unique_id property value against.\n\nReturns database entries where the unique_id property value is equal to or is less than the provided value.\t42\nExample ID filter condition\n{\n  \"filter\": {\n    \"and\": [\n      {\n        \"property\": \"ID\",\n        \"unique_id\": {\n          \"greater_than\": 1\n        }\n      },\n      {\n        \"property\": \"ID\",\n        \"unique_id\": {\n          \"less_than\": 3\n        }\n      }\n    ]\n  }\n}\n\nCompound filter conditions\n\nYou can use a compound filter condition to limit the results of a database query based on multiple conditions. This mimics filter chaining in the Notion UI.\n\nAn example filter chain in the Notion UI\n\nThe above filters in the Notion UI are equivalent to the following compound filter condition via the API:\n\nJSON\n{\n  \"and\": [\n    {\n      \"property\": \"Done\",\n      \"checkbox\": {\n        \"equals\": true\n      }\n    }, \n    {\n      \"or\": [\n        {\n          \"property\": \"Tags\",\n          \"contains\": \"A\"\n        },\n        {\n          \"property\": \"Tags\",\n          \"contains\": \"B\"\n        }\n      ]\n    }\n  ]\n}\n\n\nA compound filter condition contains an and or or key with a value that is an array of filter objects or nested compound filter objects. Nesting is supported up to two levels deep.\n\nField\tType\tDescription\tExample value\nand\tarray\tAn array of filter objects or compound filter conditions.\n\nReturns database entries that match all of the provided filter conditions.\tRefer to the examples below.\nor\tarray\tAn array of filter objects or compound filter conditions.\n\nReturns database entries that match any of the provided filter conditions\tRefer to the examples below.\nExample compound filter conditions\nExample compound filter condition for a checkbox and number property value\n{\n  \"filter\": {\n    \"and\": [\n      {\n        \"property\": \"Complete\",\n        \"checkbox\": {\n          \"equals\": true\n        }\n      },\n      {\n        \"property\": \"Working days\",\n        \"number\": {\n          \"greater_than\": 10\n        }\n      }\n    ]\n  }\n}\n\nExample nested filter condition\n{\n  \"filter\": {\n    \"or\": [\n      {\n        \"property\": \"Description\",\n        \"rich_text\": {\n          \"contains\": \"2023\"\n        }\n      },\n      {\n        \"and\": [\n          {\n            \"property\": \"Department\",\n            \"select\": {\n              \"equals\": \"Engineering\"\n            }\n          },\n          {\n            \"property\": \"Priority goal\",\n            \"checkbox\": {\n              \"equals\": true\n            }\n          }\n        ]\n      }\n    ]\n  }\n}\n"
+    },
+    {
+    "title": "Sort database entries",
+    "url": "https://developers.notion.com/reference/post-database-query-sort",
+    "html": "Sort database entries\n\nA sort is a condition used to order the entries returned from a database query.\n\nA database query can be sorted by a property and/or timestamp and in a given direction. For example, a library database can be sorted by the \"Name of a book\" (i.e. property) and in ascending (i.e. direction).\n\nHere is an example of a sort on a database property.\n\nSorting by \"Name\" property in ascending direction\n{\n    \"sorts\": [\n        {\n            \"property\": \"Name\",\n            \"direction\": \"ascending\"\n        }\n    ]\n}\n\n\nIf you’re using the Notion SDK for JavaScript, you can apply this sorting property to your query like so:\n\nJavaScript\nconst { Client } = require('@notionhq/client');\n\nconst notion = new Client({ auth: process.env.NOTION_API_KEY });\n// replace with your own database ID\nconst databaseId = 'd9824bdc-8445-4327-be8b-5b47500af6ce';\n\nconst sortedRows = async () => {\n\tconst response = await notion.databases.query({\n\t  database_id: databaseId,\n\t  sorts: [\n\t    {\n\t      property: \"Name\",\n\t      direction: \"ascending\"\n\t\t  }\n\t  ],\n\t});\n  return response;\n}\n\n\nDatabase queries can also be sorted by two or more properties, which is formally called a nested sort. The sort object listed first in the nested sort list takes precedence.\n\nHere is an example of a nested sort.\n\nJSON\n{\n    \"sorts\": [\n                {\n            \"property\": \"Food group\",\n            \"direction\": \"descending\"\n        },\n        {\n            \"property\": \"Name\",\n            \"direction\": \"ascending\"\n        }\n    ]\n}\n\n\nIn this example, the database query will first be sorted by \"Food group\" and the set with the same food group is then sorted by \"Name\".\n\nSort object\nProperty value sort\n\nThis sort orders the database query by a particular property.\n\nThe sort object must contain the following properties:\n\nProperty\tType\tDescription\tExample value\nproperty\tstring\tThe name of the property to sort against.\t\"Ingredients\"\ndirection\tstring (enum)\tThe direction to sort. Possible values include \"ascending\" and \"descending\".\t\"descending\"\nEntry timestamp sort\n\nThis sort orders the database query by the timestamp associated with a database entry.\n\nThe sort object must contain the following properties:\n\nProperty\tType\tDescription\tExample value\ntimestamp\tstring (enum)\tThe name of the timestamp to sort against. Possible values include \"created_time\" and \"last_edited_time\".\t\"last_edited_time\"\ndirection\tstring (enum)\tThe direction to sort. Possible values include \"ascending\" and \"descending\".\t\"descending\""
+    },
+    {
+    "数据库结构示例":
+    {
+        "object": "list",
+        "page_or_database": {},
+        "next_cursor": null,
+        "request_id": "3dc623f5-d7e6-4279-beb5-d79f71f6395a",
+        "results": [
+          {
+            "id": "597fa97d-7aa5-44ce-ad0c-e44769d3f81f",
+            "created_time": "2023-12-27T09:38:00.000Z",
+            "last_edited_by": {
+              "id": "14b73a13-8f42-461b-a842-2dbbf2194606",
+              "object": "user"
+            },
+            "parent": {
+              "type": "database_id",
+              "database_id": "56c8f3b9-c147-4afc-9f09-c91e80bf667a"
+            },
+            "created_by": {
+              "id": "14b73a13-8f42-461b-a842-2dbbf2194606",
+              "object": "user"
+            },
+            "url": "https://www.notion.so/3-597fa97d7aa544cead0ce44769d3f81f",
+            "archived": false,
+            "public_url": null,
+            "last_edited_time": "2023-12-28T08:28:00.000Z",
+            "object": "page",
+            "icon": null,
+            "cover": null,
+            "properties": {
+              "是否完成": { "id": "rilX", "type": "checkbox", "checkbox": false },
+              "备注": { "id": "QHgT", "type": "rich_text", "rich_text": [] },
+              "是否延期": {
+                "id": "BOQS",
+                "type": "formula",
+                "formula": { "type": "string", "string": "✅ 正常" }
+              },
+              "预期任务周期(创建/完成)": {
+                "id": "CwZB",
+                "type": "formula",
+                "formula": { "type": "string", "string": "2023/12/27 - 2023/12/28" }
+              },
+              "剩余时长/天数": {
+                "id": "HMFf",
+                "type": "formula",
+                "formula": { "type": "number", "number": 0 }
+              },
+              "预期完成时间": {
+                "id": "LkoU",
+                "type": "date",
+                "date": { "start": "2023-12-28", "end": null, "time_zone": null }
+              },
+              "完成时是否延期": {
+                "id": "_JXv",
+                "type": "formula",
+                "formula": { "type": "string", "string": "" }
+              },
+              "创建时间": {
+                "id": "%5BNn%3A",
+                "type": "created_time",
+                "created_time": "2023-12-27T09:38:00.000Z"
+              },
+              "任务标签": {
+                "id": "%5EHJ%60",
+                "type": "select",
+                "select": {
+                  "id": "cd64bbc4-94b2-44ba-97b8-078bce1648f3",
+                  "name": "重要紧急",
+                  "color": "red"
+                }
+              },
+              "任务耗时": {
+                "id": "odmt",
+                "type": "formula",
+                "formula": { "type": "string", "string": "未完成，耗时0.9天" }
+              },
+              "实际完成时间": {
+                "id": "iNcz",
+                "type": "formula",
+                "formula": { "type": "string", "string": "" }
+              },
+              "任务名称": {
+                "id": "title",
+                "type": "title",
+                "title": [
+                  {
+                    "annotations": {
+                      "code": false,
+                      "bold": false,
+                      "underline": false,
+                      "italic": false,
+                      "strikethrough": false,
+                      "color": "default"
+                    },
+                    "plain_text": "任务3",
+                    "type": "text",
+                    "href": null,
+                    "text": { "content": "任务3", "link": null }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "2a7e0632-6447-42ae-947d-2bea7f239f50",
+            "created_time": "2023-12-27T07:03:00.000Z",
+            "last_edited_by": {
+              "id": "14b73a13-8f42-461b-a842-2dbbf2194606",
+              "object": "user"
+            },
+            "parent": {
+              "type": "database_id",
+              "database_id": "56c8f3b9-c147-4afc-9f09-c91e80bf667a"
+            },
+            "created_by": {
+              "id": "14b73a13-8f42-461b-a842-2dbbf2194606",
+              "object": "user"
+            },
+            "url": "https://www.notion.so/8-2a7e0632644742ae947d2bea7f239f50",
+            "archived": false,
+            "public_url": null,
+            "last_edited_time": "2023-12-28T08:27:00.000Z",
+            "object": "page",
+            "icon": null,
+            "cover": null,
+            "properties": {
+              "是否完成": { "id": "rilX", "type": "checkbox", "checkbox": false },
+              "备注": { "id": "QHgT", "type": "rich_text", "rich_text": [] },
+              "是否延期": {
+                "id": "BOQS",
+                "type": "formula",
+                "formula": { "type": "string", "string": "✅ 正常" }
+              },
+              "预期任务周期(创建/完成)": {
+                "id": "CwZB",
+                "type": "formula",
+                "formula": { "type": "string", "string": "2023/12/27 - 2023/12/30" }
+              },
+              "剩余时长/天数": {
+                "id": "HMFf",
+                "type": "formula",
+                "formula": { "type": "number", "number": 1 }
+              },
+              "预期完成时间": {
+                "id": "LkoU",
+                "type": "date",
+                "date": { "start": "2023-12-30", "end": null, "time_zone": null }
+              },
+              "完成时是否延期": {
+                "id": "_JXv",
+                "type": "formula",
+                "formula": { "type": "string", "string": "" }
+              },
+              "创建时间": {
+                "id": "%5BNn%3A",
+                "type": "created_time",
+                "created_time": "2023-12-27T07:03:00.000Z"
+              },
+              "任务标签": {
+                "id": "%5EHJ%60",
+                "type": "select",
+                "select": { "id": "ThJ\\", "name": "不重要紧急", "color": "yellow" }
+              },
+              "任务耗时": {
+                "id": "odmt",
+                "type": "formula",
+                "formula": { "type": "string", "string": "未完成，耗时1天" }
+              },
+              "实际完成时间": {
+                "id": "iNcz",
+                "type": "formula",
+                "formula": { "type": "string", "string": "" }
+              },
+              "任务名称": {
+                "id": "title",
+                "type": "title",
+                "title": [
+                  {
+                    "annotations": {
+                      "code": false,
+                      "bold": false,
+                      "underline": false,
+                      "italic": false,
+                      "strikethrough": false,
+                      "color": "default"
+                    },
+                    "plain_text": "任务8",
+                    "type": "text",
+                    "href": null,
+                    "text": { "content": "任务8", "link": null }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "d1b911c4-cedf-4334-9c96-647a1d267f12",
+            "created_time": "2023-12-27T07:03:00.000Z",
+            "last_edited_by": {
+              "id": "14b73a13-8f42-461b-a842-2dbbf2194606",
+              "object": "user"
+            },
+            "parent": {
+              "type": "database_id",
+              "database_id": "56c8f3b9-c147-4afc-9f09-c91e80bf667a"
+            },
+            "created_by": {
+              "id": "14b73a13-8f42-461b-a842-2dbbf2194606",
+              "object": "user"
+            },
+            "url": "https://www.notion.so/2-d1b911c4cedf43349c96647a1d267f12",
+            "archived": false,
+            "public_url": null,
+            "last_edited_time": "2023-12-28T08:30:00.000Z",
+            "object": "page",
+            "icon": null,
+            "cover": null,
+            "properties": {
+              "是否完成": { "id": "rilX", "type": "checkbox", "checkbox": false },
+              "备注": { "id": "QHgT", "type": "rich_text", "rich_text": [] },
+              "是否延期": {
+                "id": "BOQS",
+                "type": "formula",
+                "formula": { "type": "string", "string": "🚨 延期" }
+              },
+              "预期任务周期(创建/完成)": {
+                "id": "CwZB",
+                "type": "formula",
+                "formula": { "type": "string", "string": "2023/12/27 - 2023/12/27" }
+              },
+              "剩余时长/天数": {
+                "id": "HMFf",
+                "type": "formula",
+                "formula": { "type": "number", "number": -1 }
+              },
+              "预期完成时间": {
+                "id": "LkoU",
+                "type": "date",
+                "date": { "start": "2023-12-27", "end": null, "time_zone": null }
+              },
+              "完成时是否延期": {
+                "id": "_JXv",
+                "type": "formula",
+                "formula": { "type": "string", "string": "" }
+              },
+              "创建时间": {
+                "id": "%5BNn%3A",
+                "type": "created_time",
+                "created_time": "2023-12-27T07:03:00.000Z"
+              },
+              "任务标签": {
+                "id": "%5EHJ%60",
+                "type": "select",
+                "select": { "id": "qLUZ", "name": "不重要不紧急", "color": "green" }
+              },
+              "任务耗时": {
+                "id": "odmt",
+                "type": "formula",
+                "formula": { "type": "string", "string": "未完成，耗时1天" }
+              },
+              "实际完成时间": {
+                "id": "iNcz",
+                "type": "formula",
+                "formula": { "type": "string", "string": "" }
+              },
+              "任务名称": {
+                "id": "title",
+                "type": "title",
+                "title": [
+                  {
+                    "annotations": {
+                      "code": false,
+                      "bold": false,
+                      "underline": false,
+                      "italic": false,
+                      "strikethrough": false,
+                      "color": "default"
+                    },
+                    "plain_text": "任务2",
+                    "type": "text",
+                    "href": null,
+                    "text": { "content": "任务2", "link": null }
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "type": "page_or_database",
+        "has_more": false
+      }
+    }
+]

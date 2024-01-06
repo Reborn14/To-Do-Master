@@ -1,0 +1,147 @@
+openapi: 3.0.0
+info:
+  title: Notion API Integration
+  description: API to interact with Notion for querying database, creating pages and updating pages
+  version: 1.0.0
+servers:
+  - url: <填入自己的url>
+    description: Main server
+paths:
+  /:
+    get:
+      summary: Read Root
+      operationId: read_root__get
+      responses:
+        "200":
+          description: A welcome message
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Hello:
+                    type: string
+      security:
+        - APIKeyAuth: []
+  /query-database:
+    post:
+      summary: Query Database
+      description: Query a database
+      operationId: query_database_query_database_post
+      x-openai-isConsequential: false
+      parameters:
+        - name: filter
+          in: body
+          required: false
+          schema:
+            type: json
+        - name: sorts
+          in: body
+          required: false
+          schema:
+            type: list
+      responses:
+        "200":
+          description: Query result
+          content:
+            application/json:
+              schema: {}
+        "422":
+          description: Invalid request
+          content:
+            application/json:
+              schema: 
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+        - APIKeyAuth: []
+  /create-page:
+    post:
+      summary: Create Page
+      description: Create a new page in a database
+      operationId: create_page_create_page_post
+      x-openai-isConsequential: false
+      parameters:
+        - name: properties
+          in: body
+          required: true
+          schema:
+            type: json
+      responses:
+        "200":
+          description: Created page details
+          content:
+            application/json:
+              schema: {}
+        "422":
+          description: Invalid request
+          content:
+            application/json:
+              schema: 
+                $ref: '#/components/schemas/HTTPValidationError'   
+      security:
+        - APIKeyAuth: []
+
+  /update-page:
+    patch:
+      summary: Update Page
+      description: Update a page in a database
+      operationId: update_page_update_page_patch
+      x-openai-isConsequential: false
+      parameters:
+        - name: page_id
+          in: body
+          required: true
+          schema:
+            type: str
+        - name: properties
+          in: body
+          required: true
+          schema:
+            type: json
+      responses:
+        "200":
+          description: Updated page details
+          content:
+            application/json:
+              schema: {}
+        "422":
+          description: Invalid request
+          content:
+            application/json:
+              schema: 
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+        - APIKeyAuth: []               
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+  schemas:
+    HTTPValidationError:
+      title: HTTPValidationError
+      type: object
+      properties:
+        detail:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationError'
+      required:
+        - detail
+    ValidationError:
+      title: ValidationError
+      type: object
+      properties:
+        loc:
+          type: array
+          items:
+            type: string
+        msg:
+          type: string
+        type:
+          type: string
+      required:
+        - loc
+        - msg
+        - type
