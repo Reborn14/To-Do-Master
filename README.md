@@ -5,7 +5,7 @@
 > 是一款富有趣味性，并且专门为高效管理日常任务而设计的 GPTs ([体验地址](https://chat.openai.com/g/g-IhGsoyIkP-to-do-master))
 
 ![Python](https://img.shields.io/badge/python-blue?logo=python&logoColor=white)
-![License](https://img.shields.io/github/license/Reborn14/To-Do-Master?style=flat&color=green)
+![License](https://img.shields.io/github/license/Reborn14/To-Do-Master?style=flat)
 ![GitHub forks](https://img.shields.io/github/forks/Reborn14/To-Do-Master?style=flat&color=c56cf0)
 ![GitHub stars](https://img.shields.io/github/stars/Reborn14/To-Do-Master?style=flat&color=fff200)
 
