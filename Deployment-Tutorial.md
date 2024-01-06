@@ -20,7 +20,7 @@
 
 ### 步骤二：配置 Notion 数据库模板
 
-1. 点击 Notion 链接：https://talented-petunia-553.notion.site/To-Do-List-90a81314b090445b8ba8dfd0dc8def2d?pvs=4。获取 To-Do List 模板
+1. 点击 Notion 链接：https://talented-petunia-553.notion.site/To-Do-List-90a81314b090445b8ba8dfd0dc8def2d?pvs=4 。获取 To-Do List 模板
 
 3. 安装我们在**步骤一**创建好的集成
 
